@@ -483,3 +483,13 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+void default_signal_handler(int signum) {
+   cprintf("A signal %d was accepted by process %d", signum, proc->pid);
+}
+
+sighandler_t signal(int signum, sighandler_t handler) {
+  sighandler_t prev = proc->signal_handlers[signum];
+  proc->signal_handlers[signum] = handler;  
+  return prev;
+}

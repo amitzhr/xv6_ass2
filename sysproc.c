@@ -89,3 +89,12 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+int sys_signal(void) {
+  int signum;
+  sighandler_t handler;
+  argint(0, &signum);
+  argptr(1, (char**)&handler, 4);
+
+  return (int)signal(signum, handler);
+}
