@@ -68,11 +68,13 @@ struct proc {
   unsigned int pending;        
   void* signal_handlers[NUMSIG];
   int handling_signal;
+  unsigned int alarm_ticks;
 };
 
 void default_signal_handler(int signum);
 
 
+void updateProcessTicks();
 
 // Process memory is laid out contiguously, low addresses first:
 //   text

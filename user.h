@@ -27,6 +27,7 @@ int sleep(int);
 int uptime(void);
 sighandler_t signal(int signum, sighandler_t handler);
 int sigsend(int pid, int signum);
+int sigalarm(int);
 
 // ulib.c
 int stat(char*, struct stat*);
@@ -41,3 +42,5 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+#define SIGALRM 14

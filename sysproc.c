@@ -114,3 +114,11 @@ int sys_sigreturn(void) {
   sigreturn();
   return 0;
 }
+
+int sys_sigalarm(void) {
+  int ticks;
+  if (argint(0, &ticks) < 0)
+    return -1;
+  sigalarm((uint)ticks);
+  return 0;
+}

@@ -74,6 +74,7 @@ found:
   p->context->eip = (uint)forkret;
   
   p->handling_signal = 0;
+  p->alarm_ticks = 0;
   int i;
   for (i = 0; i < NUMSIG; i++)
     p->signal_handlers[i] = &default_signal_handler;
@@ -575,5 +576,32 @@ void sigreturn() {
   acquire(&ptable.lock);
   struct trapframe orig_tf = *((struct trapframe*)(proc->tf->esp));
   *proc->tf = orig_tf;
+  release(&ptable.lock);
+}
+
+int sigalarm(int ticks) {
+  if (proc->alarm_ticks == 0 || ticks == 0) {
+    acquire(&ptable.lock);
+    proc->alarm_ticks = ticks;
+    release(&ptable.lock);
+    return 0;
+  } else {
+    return -1;
+  }
+}
+
+void updateProcessTicks() {
+  acquire(&ptable.lock);
+  struct proc* p;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if (p->alarm_ticks != 0) {
+      p->alarm_ticks--;
+      if (p->alarm_ticks == 0) {
+        release(&ptable.lock);
+        sigsend(p->pid, SIGALRM);
+        acquire(&ptable.lock);
+      }
+    }
+  }
   release(&ptable.lock);
 }

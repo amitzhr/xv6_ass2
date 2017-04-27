@@ -120,6 +120,7 @@ void            yield(void);
 sighandler_t    signal(int signum, sighandler_t handler);
 int             sigsend(int pid, int signum);
 void            sigreturn();
+int             sigalarm(int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -188,3 +189,5 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+#define SIGALRM 14
