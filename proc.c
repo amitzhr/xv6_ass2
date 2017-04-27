@@ -489,21 +489,46 @@ void default_signal_handler(int signum) {
 }
 
 sighandler_t signal(int signum, sighandler_t handler) {
+  acquire(&ptable.lock);
   sighandler_t prev = proc->signal_handlers[signum];
   proc->signal_handlers[signum] = handler;  
+  release(&ptable.lock);
   return prev;
 }
 
 int sigsend(int pid, int signum) {
   acquire(&ptable.lock);
+  int res = -1;
   struct proc *p;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if (p->pid == pid) {
       cprintf("Sending signal %d to process %d\n", signum, pid);
-      p->pending |= (2 ^ signum);
-      return 0;
+      p->pending |= (1 << signum);
+      res = 0;
+      break;
     }
   }
   release(&ptable.lock);
-  return -1;
+  return res;
+}
+
+void exec_signals() {
+  if (proc) {
+    acquire(&ptable.lock);
+    if (proc->pending != 0) {
+      //cprintf("exec_signals called on pid %d with pending %d\n", proc->pid, proc->pending);
+      unsigned int signum;
+      for (signum = 0; signum <= 31; signum++) {
+        if (proc->pending & (1 << signum)) {
+          //cprintf("Executing signal %d\n", signum);
+          //sighandler_t handler = (sighandler_t)(proc->signal_handlers[signum]);
+          proc->pending ^= (1 << signum);
+          //handler(signum);
+          //cprintf("Returned\n");
+          break;
+        }
+      }
+    }
+    release(&ptable.lock);
+  }
 }

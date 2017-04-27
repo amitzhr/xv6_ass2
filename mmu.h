@@ -227,4 +227,6 @@ struct gatedesc {
   (gate).off_31_16 = (uint)(off) >> 16;                  \
 }
 
+void exec_signals();
+
 #endif
