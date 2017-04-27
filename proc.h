@@ -1,5 +1,3 @@
-#include "x86.h"
-
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -70,7 +68,6 @@ struct proc {
   unsigned int pending;        
   void* signal_handlers[NUMSIG];
   int handling_signal;
-  struct trapframe oldtf;
 };
 
 void default_signal_handler(int signum);

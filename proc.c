@@ -518,12 +518,6 @@ int sigsend(int pid, int signum) {
   return res;
 }
 
-void sigreturn() {
-  cprintf("Sigreturn called\n");
-  proc->handling_signal = 0;
-  *proc->tf = proc->oldtf;
-}
-
 void sigreturn_caller() {
   __asm__ (
            "movl $24, %eax\n\t" 
@@ -547,24 +541,20 @@ void exec_signals(struct trapframe *tf) {
             default_signal_handler(signum);
             proc->handling_signal = 0;
           } else {
-
-            proc->oldtf = *tf;
+            uint old_esp = proc->tf->esp;
+            proc->tf->esp -= sizeof(struct trapframe);
+            memmove((char*)proc->tf->esp, proc->tf, sizeof(struct trapframe));
+            ((struct trapframe*)(proc->tf->esp))->esp = old_esp;
 
             uint code_length = &exec_signals - &sigreturn_caller;
-            cprintf("code length: %d\n", code_length);
             proc->tf->esp -= code_length;
             memmove((char*)proc->tf->esp, &sigreturn_caller, code_length);
-            cprintf("Wrote %x to esp\n", *((uint*)proc->tf->esp));
             uint code_addr = proc->tf->esp;
-            cprintf("code_addr: %x\n", code_addr);
             proc->tf->esp -= 4;
             memmove((char*)proc->tf->esp, &signum, 4);
             proc->tf->esp -= 4;
             memmove((char*)proc->tf->esp, &code_addr, 4);
             proc->tf->eip = (uint)handler;
-            cprintf("Handler: %x\n", handler);
-
-            cprintf("Returned\n");
             break;
           }
         }
@@ -572,4 +562,18 @@ void exec_signals(struct trapframe *tf) {
       release(&ptable.lock);
     }
   }
+}
+
+void sigreturn() {
+  proc->handling_signal = 0;
+
+  uint code_length = &exec_signals - &sigreturn_caller;
+
+  // Move esp forward exactly the amount we moved in exec_signals
+  proc->tf->esp += code_length + 8;
+
+  acquire(&ptable.lock);
+  struct trapframe orig_tf = *((struct trapframe*)(proc->tf->esp));
+  *proc->tf = orig_tf;
+  release(&ptable.lock);
 }
