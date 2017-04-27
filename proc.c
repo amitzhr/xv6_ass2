@@ -76,7 +76,7 @@ found:
   p->handling_signal = 0;
   int i;
   for (i = 0; i < NUMSIG; i++)
-    p->signal_handlers[i] = default_signal_handler;
+    p->signal_handlers[i] = &default_signal_handler;
 
   return p;
 }
@@ -226,6 +226,7 @@ exit(void)
 
   // Jump into the scheduler, never to return.
   proc->state = ZOMBIE;
+
   sched();
   panic("zombie exit");
 }
@@ -517,10 +518,22 @@ int sigsend(int pid, int signum) {
   return res;
 }
 
-void exec_signals() {
-  if (proc && !proc->handling_signal && (proc->tf->cs&3) == DPL_USER) {
-    acquire(&ptable.lock);
+void sigreturn() {
+  cprintf("Sigreturn called\n");
+  proc->handling_signal = 0;
+  *proc->tf = proc->oldtf;
+}
+
+void sigreturn_caller() {
+  __asm__ (
+           "movl $24, %eax\n\t" 
+           "int     $64");
+}
+
+void exec_signals(struct trapframe *tf) {
+  if (proc && !proc->handling_signal && ((proc->tf->cs & 3) == DPL_USER)) {
     if (proc->pending != 0) {
+      acquire(&ptable.lock);
       proc->handling_signal = 1;
       cprintf("exec_signals called on pid %d with pending %d\n", proc->pid, proc->pending);
       unsigned int signum;
@@ -529,13 +542,34 @@ void exec_signals() {
           cprintf("Executing signal %d\n", signum);
           sighandler_t handler = (sighandler_t)(proc->signal_handlers[signum]);
           proc->pending ^= (1 << signum);
-          handler(signum);
-          cprintf("Returned\n");
-          break;
+
+          if (proc->signal_handlers[signum] == default_signal_handler) {
+            default_signal_handler(signum);
+            proc->handling_signal = 0;
+          } else {
+
+            proc->oldtf = *tf;
+
+            uint code_length = &exec_signals - &sigreturn_caller;
+            cprintf("code length: %d\n", code_length);
+            proc->tf->esp -= code_length;
+            memmove((char*)proc->tf->esp, &sigreturn_caller, code_length);
+            cprintf("Wrote %x to esp\n", *((uint*)proc->tf->esp));
+            uint code_addr = proc->tf->esp;
+            cprintf("code_addr: %x\n", code_addr);
+            proc->tf->esp -= 4;
+            memmove((char*)proc->tf->esp, &signum, 4);
+            proc->tf->esp -= 4;
+            memmove((char*)proc->tf->esp, &code_addr, 4);
+            proc->tf->eip = (uint)handler;
+            cprintf("Handler: %x\n", handler);
+
+            cprintf("Returned\n");
+            break;
+          }
         }
       }
-      proc->handling_signal = 0;
+      release(&ptable.lock);
     }
-    release(&ptable.lock);
   }
 }

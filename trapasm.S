@@ -21,12 +21,12 @@ alltraps:
   # Call trap(tf), where tf=%esp
   pushl %esp
   call trap
+  call exec_signals
   addl $4, %esp
 
   # Return falls through to trapret...
 .globl trapret
 trapret:
-  call exec_signals
   popal
   popl %gs
   popl %fs
