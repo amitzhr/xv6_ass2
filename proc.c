@@ -72,6 +72,11 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
+  
+  p->handling_signal = 0;
+  int i;
+  for (i = 0; i < NUMSIG; i++)
+    p->signal_handlers[i] = default_signal_handler;
 
   return p;
 }
@@ -513,21 +518,23 @@ int sigsend(int pid, int signum) {
 }
 
 void exec_signals() {
-  if (proc) {
+  if (proc && !proc->handling_signal && (proc->tf->cs&3) == DPL_USER) {
     acquire(&ptable.lock);
     if (proc->pending != 0) {
-      //cprintf("exec_signals called on pid %d with pending %d\n", proc->pid, proc->pending);
+      proc->handling_signal = 1;
+      cprintf("exec_signals called on pid %d with pending %d\n", proc->pid, proc->pending);
       unsigned int signum;
       for (signum = 0; signum <= 31; signum++) {
         if (proc->pending & (1 << signum)) {
-          //cprintf("Executing signal %d\n", signum);
-          //sighandler_t handler = (sighandler_t)(proc->signal_handlers[signum]);
+          cprintf("Executing signal %d\n", signum);
+          sighandler_t handler = (sighandler_t)(proc->signal_handlers[signum]);
           proc->pending ^= (1 << signum);
-          //handler(signum);
-          //cprintf("Returned\n");
+          handler(signum);
+          cprintf("Returned\n");
           break;
         }
       }
+      proc->handling_signal = 0;
     }
     release(&ptable.lock);
   }

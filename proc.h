@@ -67,6 +67,7 @@ struct proc {
   char name[16];               // Process name (debugging)
   unsigned int pending;        
   void* signal_handlers[NUMSIG];
+  int handling_signal;
 };
 
 void default_signal_handler(int signum);

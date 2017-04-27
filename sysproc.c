@@ -93,15 +93,19 @@ sys_uptime(void)
 int sys_signal(void) {
   int signum;
   sighandler_t handler;
-  argint(0, &signum);
-  argptr(1, (char**)&handler, 4);
+  if (argint(0, &signum) < 0) 
+    return -1;
+  if (argptr(1, (char**)&handler, 4) < 0) 
+    return -1;
 
   return (int)signal(signum, handler);
 }
 
 int sys_sigsend(void) {
   int pid, signum;
-  argint(0, &pid);
-  argint(1, &signum);
+  if (argint(0, &pid) < 0)
+    return -1;
+  if (argint(1, &signum) < 0)
+    return -1;
   return sigsend(pid, signum);
 }
