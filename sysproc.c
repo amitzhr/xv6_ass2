@@ -98,3 +98,10 @@ int sys_signal(void) {
 
   return (int)signal(signum, handler);
 }
+
+int sys_sigsend(void) {
+  int pid, signum;
+  argint(0, &pid);
+  argint(1, &signum);
+  return sigsend(pid, signum);
+}

@@ -485,11 +485,25 @@ procdump(void)
 }
 
 void default_signal_handler(int signum) {
-   cprintf("A signal %d was accepted by process %d", signum, proc->pid);
+   cprintf("A signal %d was accepted by process %d\n", signum, proc->pid);
 }
 
 sighandler_t signal(int signum, sighandler_t handler) {
   sighandler_t prev = proc->signal_handlers[signum];
   proc->signal_handlers[signum] = handler;  
   return prev;
+}
+
+int sigsend(int pid, int signum) {
+  acquire(&ptable.lock);
+  struct proc *p;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if (p->pid == pid) {
+      cprintf("Sending signal %d to process %d\n", signum, pid);
+      p->pending |= (2 ^ signum);
+      return 0;
+    }
+  }
+  release(&ptable.lock);
+  return -1;
 }
