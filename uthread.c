@@ -10,7 +10,8 @@
 typedef struct {
 	uint tid;
 	char stack[THREAD_STACK_SIZE];
-	uint sp;
+	struct trapframe tf;
+	int new;
 } TCB, *PTCB;
 
 TCB* threads[MAX_UTHREADS];
@@ -37,6 +38,17 @@ void alarm_handler(int signum) {
 	uthread_schedule();
 }
 
+struct trapframe* find_old_tf() {
+	uint current_esp;
+	__asm__ ("movl %%esp, %0\n\t": "=r" (current_esp));
+	uint* ptr = (uint*)(current_esp);
+    while (*ptr != OLD_TF_MAGIC) {
+      ptr++;
+    }
+
+    return (struct trapframe*)(ptr + 1);
+}
+
 void uthread_schedule() {
 	printf(1, "uthread_schedule called\n");
 
@@ -57,19 +69,23 @@ void uthread_schedule() {
 	printf(1, "Running thread %d\n", threads[i]->tid);
 
 	if (i != currentThread) {
-		uint current_esp;
-		__asm__ ("movl %%esp, %0\n\t": "=r" (current_esp));
-		uint* ptr = (uint*)(current_esp);
-	    while (*ptr != OLD_TF_MAGIC) {
-	      ptr++;
+		struct trapframe* tf = find_old_tf();
+		printf(1, "Old tf found: %x\n", tf);
+
+	    if (currentThread >= 0) {
+	    	threads[currentThread]->tf = *tf;
 	    }
 
-	    printf(1, "Guessed tf: %x\n", (ptr+1));
-	    struct trapframe* tf = (struct trapframe*)(ptr + 1);
-
-	    tf->esp = threads[i]->sp;
-	    if (currentThread >= 0) 
-	    	threads[currentThread]->sp = current_esp;
+	    if (threads[i]->new) {
+	    	tf->esp = threads[i]->tf.esp;
+	    	tf->eip = threads[i]->tf.eip;
+	    	tf->ebp = threads[i]->tf.ebp;
+	    	threads[i]->new = 0;
+	    } else {
+	    	*tf = threads[i]->tf;
+	    }
+	    
+	    printf(1, "Function to be run: %x\n", tf->eip);
 
 		currentThread = i;	
 	}
@@ -88,20 +104,19 @@ void uthread_exit() {
 	}
 
 	currentThread = -1;
+	threadsIndex--;
 
 	uthread_yield();
 }
 
 int uthread_init() {
 	if (threadsIndex != 0) {
-		printf(2, "uthread_init called more than once!");
+		printf(2, "uthread_init called more than once!\n");
+		exit();
 		return -1;
 	}
 
 	threads[threadsIndex] = malloc(sizeof(TCB));
-	printf(1, "esp before: 0x%x\n", threads[threadsIndex]->sp);
-	__asm__ ("movl %%esp, %0\n\t": "=r" (threads[threadsIndex]->sp));
-	printf(1, "Saved esp: 0x%x\n", threads[threadsIndex]->sp);
 
 	threads[threadsIndex]->tid = tidCounter;
 	tidCounter++;
@@ -115,7 +130,7 @@ int uthread_init() {
 
 int uthread_create(void (*start_func)(void *), void* arg) {
 	if (threadsIndex >= MAX_UTHREADS) {
-		printf(2, "Too many threads! Exiting from uthread_create...");
+		printf(2, "Too many threads! Exiting from uthread_create...\n");
 		return -1;
 	}
 
@@ -127,11 +142,15 @@ int uthread_create(void (*start_func)(void *), void* arg) {
 	threads[threadsIndex] = tcb;
 	threadsIndex++;
 
-	tcb->sp = (uint)(tcb->stack + THREAD_STACK_SIZE);
-	tcb->sp -= 4;
-	*((uint*)tcb->sp) = (uint)arg;
-	tcb->sp -= 4;
-	*((uint*)tcb->sp) = (uint)start_func;
+	tcb->tf.esp = (uint)(tcb->stack + THREAD_STACK_SIZE);
+	tcb->tf.esp -= 4;
+	*((uint*)tcb->tf.esp) = (uint)arg;
+	tcb->tf.esp -= 4;
+	*((uint*)tcb->tf.esp) = (uint)uthread_exit;
+	tcb->tf.ebp = tcb->tf.esp;
+	tcb->tf.eip = (uint)start_func;
+	tcb->new = 1;
+	printf(1, "Start func: %x\n", start_func);
 
 	return tcb->tid;
 }
@@ -148,12 +167,11 @@ int uthread_join(int tid) {
 
 int uthread_sleep(int ticks) {
 	uint start_time = uptime();
-	printf(1, "Start time before: %d\n", start_time);
+	printf(1, "%d Start time: %d\n", threads[currentThread]->tid, start_time);
 	while (uptime() - start_time < ticks) {
-		printf(1, "Start time: %d\n", start_time);
 		uthread_yield();
 	}
-	printf(1, "Sleep done\n");
+	printf(1, "%d Sleep done\n", threads[currentThread]->tid);
 	return 0;
 }
 
