@@ -127,7 +127,7 @@ int uthread_create(void (*start_func)(void *), void* arg) {
 	threads[threadsIndex] = tcb;
 	threadsIndex++;
 
-	tcb->sp = (uint)(tcb->sp + THREAD_STACK_SIZE);
+	tcb->sp = (uint)(tcb->stack + THREAD_STACK_SIZE);
 	tcb->sp -= 4;
 	*((uint*)tcb->sp) = (uint)arg;
 	tcb->sp -= 4;
