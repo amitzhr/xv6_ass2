@@ -546,6 +546,10 @@ void exec_signals(struct trapframe *tf) {
             proc->tf->esp -= sizeof(struct trapframe);
             memmove((char*)proc->tf->esp, proc->tf, sizeof(struct trapframe));
             ((struct trapframe*)(proc->tf->esp))->esp = old_esp;
+            cprintf("Old tf location: %x\n", proc->tf->esp);
+
+            proc->tf->esp -= 4;
+            *((uint*)proc->tf->esp) = OLD_TF_MAGIC;
 
             uint code_length = &exec_signals - &sigreturn_caller;
             proc->tf->esp -= code_length;
@@ -568,10 +572,12 @@ void exec_signals(struct trapframe *tf) {
 void sigreturn() {
   proc->handling_signal = 0;
 
-  uint code_length = &exec_signals - &sigreturn_caller;
-
   // Move esp forward exactly the amount we moved in exec_signals
-  proc->tf->esp += code_length + 8;
+  uint* ptr = (uint*)proc->tf->esp;
+  while (*ptr != OLD_TF_MAGIC) {
+    ptr++;
+  }
+  proc->tf->esp = (uint)(ptr + 1);
 
   acquire(&ptable.lock);
   struct trapframe orig_tf = *((struct trapframe*)(proc->tf->esp));
@@ -594,6 +600,8 @@ void updateProcessTicks() {
   acquire(&ptable.lock);
   struct proc* p;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if (p->state != RUNNING && p->state != RUNNABLE) 
+      continue;
     if (p->alarm_ticks != 0) {
       p->alarm_ticks--;
       if (p->alarm_ticks == 0) {

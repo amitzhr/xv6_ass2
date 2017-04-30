@@ -42,5 +42,18 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+void* malloc(uint);
+
+// uthread.c
+int uthread_init();
+int uthread_create(void (*start_func)(void *), void* arg);
+void uthread_schedule();
+void uthread_exit();
+int uthread_self();
+int uthread_join(int tid);
+int uthread_sleep(int ticks);
+
 
 #define SIGALRM 14
+
+#define OLD_TF_MAGIC 0xDEADBEEF

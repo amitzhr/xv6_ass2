@@ -191,3 +191,5 @@ void            clearpteu(pde_t *pgdir, char *uva);
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
 
 #define SIGALRM 14
+
+#define OLD_TF_MAGIC 0xDEADBEEF
