@@ -115,10 +115,10 @@ int sys_sigreturn(void) {
   return 0;
 }
 
-int sys_sigalarm(void) {
+int sys_alarm(void) {
   int ticks;
   if (argint(0, &ticks) < 0)
     return -1;
-  sigalarm((uint)ticks);
+  alarm((uint)ticks);
   return 0;
 }

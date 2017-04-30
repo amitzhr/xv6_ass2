@@ -579,7 +579,7 @@ void sigreturn() {
   release(&ptable.lock);
 }
 
-int sigalarm(int ticks) {
+int alarm(int ticks) {
   if (proc->alarm_ticks == 0 || ticks == 0) {
     acquire(&ptable.lock);
     proc->alarm_ticks = ticks;

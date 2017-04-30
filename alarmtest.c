@@ -8,13 +8,13 @@ void handler(int signum) {
 int
 main(int argc, char *argv[])
 {
-	sigalarm(2);
+	alarm(2);
 	printf(1, "Finished sigalarm\n");
 
 	sleep(5);
 
 	signal(SIGALRM, handler);
-	sigalarm(2);
+	alarm(2);
 	sleep(5);
 	exit();
 }
