@@ -9,6 +9,12 @@ struct semaphore {
 	uint bid;
 };
 
+struct counting_semaphore {
+	uint s1;
+	uint s2;
+	uint value;
+};
+
 struct semaphore semaphores[MAX_BSEM];
 uint bsemIndex = 0;
 uint bidCounter = 0;
@@ -89,4 +95,38 @@ void bsem_up(int bid) {
 	}
 		
 	semaphores[i].available = 1;
+}
+
+struct counting_semaphore* sem_alloc(uint value) {
+	struct counting_semaphore* s = malloc(sizeof(struct counting_semaphore));
+	s->value = value;
+	s->s1 = bsem_alloc();
+	s->s2 = bsem_alloc();
+	if (value == 0) {
+		bsem_down(s->s2);
+	}
+	return s;
+}
+
+void sem_free(struct counting_semaphore* s) {
+	printf(1, "Freeing counting_semaphore %x\n", (uint)s);
+	free(s);
+}
+
+void down(struct counting_semaphore* sem) {
+	bsem_down(sem->s2);
+	bsem_down(sem->s1);
+	if (sem->value > 0) {
+		bsem_up(sem->s2);
+	}
+	bsem_up(sem->s1);
+}
+
+void up(struct counting_semaphore* sem) {
+	bsem_down(sem->s1);
+	sem->value++;
+	if (sem->value == 1) {
+		bsem_up(sem->s2);
+	}
+	bsem_up(sem->s1);
 }

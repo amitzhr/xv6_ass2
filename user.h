@@ -59,6 +59,11 @@ int bsem_alloc();
 void bsem_free(int);
 void bsem_down(int);
 void bsem_up(int);
+struct counting_semaphore;
+struct counting_semaphore* sem_alloc(uint value);
+void sem_free(struct counting_semaphore* s);
+void down(struct counting_semaphore* sem);
+void up(struct counting_semaphore* sem);
 
 
 #define SIGALRM 14

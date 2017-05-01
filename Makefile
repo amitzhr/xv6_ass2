@@ -173,13 +173,12 @@ UPROGS=\
 	_rm\
 	_sh\
 	_stressfs\
-	_usertests\
 	_wc\
 	_zombie\
 	_signaltest\
 	_alarmtest\
 	_uthreadtest\
-	_usemaphoretest\
+	_sanity\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
