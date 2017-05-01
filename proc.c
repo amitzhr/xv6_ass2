@@ -546,7 +546,6 @@ void exec_signals(struct trapframe *tf) {
             proc->tf->esp -= sizeof(struct trapframe);
             memmove((char*)proc->tf->esp, proc->tf, sizeof(struct trapframe));
             ((struct trapframe*)(proc->tf->esp))->esp = old_esp;
-            cprintf("Old tf location: %x\n", proc->tf->esp);
 
             proc->tf->esp -= 4;
             *((uint*)proc->tf->esp) = OLD_TF_MAGIC;

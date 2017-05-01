@@ -70,7 +70,6 @@ void uthread_schedule() {
 
 	if (i != currentThread) {
 		struct trapframe* tf = find_old_tf();
-		printf(1, "Old tf found: %x\n", tf);
 
 	    if (currentThread >= 0) {
 	    	threads[currentThread]->tf = *tf;
@@ -84,8 +83,6 @@ void uthread_schedule() {
 	    } else {
 	    	*tf = threads[i]->tf;
 	    }
-	    
-	    printf(1, "Function to be run: %x\n", tf->eip);
 
 		currentThread = i;	
 	}
@@ -167,7 +164,7 @@ int uthread_join(int tid) {
 
 int uthread_sleep(int ticks) {
 	uint start_time = uptime();
-	printf(1, "%d Start time: %d\n", threads[currentThread]->tid, start_time);
+	printf(1, "Thread %d sleeping for %d ticks\n", threads[currentThread]->tid, ticks);
 	while (uptime() - start_time < ticks) {
 		uthread_yield();
 	}

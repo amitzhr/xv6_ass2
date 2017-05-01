@@ -52,6 +52,13 @@ void uthread_exit();
 int uthread_self();
 int uthread_join(int tid);
 int uthread_sleep(int ticks);
+void uthread_yield();
+
+// usemaphore.c
+int bsem_alloc();
+void bsem_free(int);
+void bsem_down(int);
+void bsem_up(int);
 
 
 #define SIGALRM 14
