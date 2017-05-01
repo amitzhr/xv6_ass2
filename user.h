@@ -64,3 +64,5 @@ void bsem_up(int);
 #define SIGALRM 14
 
 #define OLD_TF_MAGIC 0xDEADBEEF
+
+#define UTHREAD_QUANTA 5

@@ -3,7 +3,6 @@
 #include "x86.h"
 
 #define MAX_UTHREADS 64
-#define UTHREAD_QUANTA 5
 
 #define THREAD_STACK_SIZE 4096
 

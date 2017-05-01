@@ -66,7 +66,14 @@ void bsem_down(int bid) {
 	while (!b->available)
 		uthread_yield();
 
-	b->available = 0;
+	alarm(0);
+	if (b->available) {
+		b->available = 0;
+		alarm(UTHREAD_QUANTA);
+	} else {
+		alarm(UTHREAD_QUANTA);
+		bsem_down(bid);
+	}
 }
 
 void bsem_up(int bid) {
