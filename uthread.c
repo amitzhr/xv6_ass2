@@ -18,7 +18,7 @@ uint threadsIndex = 0;
 
 uint tidCounter = 0;
 
-uint currentThread = 0;
+int currentThread = 0;
 
 PTCB find_thread_by_tid(int tid) {
 	uint i;
