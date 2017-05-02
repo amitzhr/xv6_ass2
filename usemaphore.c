@@ -116,6 +116,7 @@ void sem_free(struct counting_semaphore* s) {
 void down(struct counting_semaphore* sem) {
 	bsem_down(sem->s2);
 	bsem_down(sem->s1);
+	sem->value--;
 	if (sem->value > 0) {
 		bsem_up(sem->s2);
 	}

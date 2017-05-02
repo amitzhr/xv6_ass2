@@ -509,7 +509,7 @@ int sigsend(int pid, int signum) {
   struct proc *p;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if (p->pid == pid) {
-      cprintf("Sending signal %d to process %d\n", signum, pid);
+      //cprintf("Sending signal %d to process %d\n", signum, pid);
       p->pending |= (1 << signum);
       res = 0;
       break;
@@ -530,11 +530,11 @@ void exec_signals(struct trapframe *tf) {
     if (proc->pending != 0) {
       acquire(&ptable.lock);
       proc->handling_signal = 1;
-      cprintf("exec_signals called on pid %d with pending %d\n", proc->pid, proc->pending);
+      //cprintf("exec_signals called on pid %d with pending %d\n", proc->pid, proc->pending);
       unsigned int signum;
       for (signum = 0; signum <= 31; signum++) {
         if (proc->pending & (1 << signum)) {
-          cprintf("Executing signal %d\n", signum);
+          //cprintf("Executing signal %d\n", signum);
           sighandler_t handler = (sighandler_t)(proc->signal_handlers[signum]);
           proc->pending ^= (1 << signum);
 

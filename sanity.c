@@ -11,7 +11,7 @@ uint producerValue = 1;
 
 struct counting_semaphore* empty;
 struct counting_semaphore* full;
-uint mutex;
+int mutex;
 
 void producer_handler(void* param) {
 	while (producerValue <= MAX_QUEUE_VALUE) {
@@ -36,9 +36,11 @@ void consumer_handler(void* param) {
 		bsem_up(mutex);
 		up(empty);
 		uthread_sleep(item);
+		bsem_down(mutex);
 		printf(1, "Thread %d slept for %d ticks.\n", uthread_self(), item);
+		bsem_up(mutex);
 		if (item >= MAX_QUEUE_VALUE)
-			break;
+			exit();
 	}
 }
 
@@ -62,6 +64,10 @@ int main(int argc, char *argv[])
 		uthread_join(consumers[i]);
 	}
 	uthread_join(producer);
+
+	sem_free(empty);
+	sem_free(full);
+	bsem_free(mutex);
 	exit();
 	return 0;
 }

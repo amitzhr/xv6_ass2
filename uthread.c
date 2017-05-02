@@ -49,7 +49,7 @@ struct trapframe* find_old_tf() {
 }
 
 void uthread_schedule() {
-	printf(1, "uthread_schedule called\n");
+	//printf(1, "uthread_schedule called\n");
 
 	uint threadsChecked = 0;
 	uint i = (currentThread + 1) % THREAD_STACK_SIZE;
@@ -65,7 +65,7 @@ void uthread_schedule() {
 		exit();
 	}
 
-	printf(1, "Running thread %d\n", threads[i]->tid);
+	//printf(1, "Running thread %d\n", threads[i]->tid);
 
 	if (i != currentThread) {
 		struct trapframe* tf = find_old_tf();
@@ -90,7 +90,7 @@ void uthread_schedule() {
 }
 
 void uthread_exit() {
-	printf(1, "uthread_exit called for %d\n", threads[currentThread]->tid);
+	//printf(1, "uthread_exit called for %d\n", threads[currentThread]->tid);
 	free(threads[currentThread]);
 	threads[currentThread] = 0;
 
@@ -146,7 +146,6 @@ int uthread_create(void (*start_func)(void *), void* arg) {
 	tcb->tf.ebp = tcb->tf.esp;
 	tcb->tf.eip = (uint)start_func;
 	tcb->new = 1;
-	printf(1, "Start func: %x\n", start_func);
 
 	return tcb->tid;
 }
@@ -163,11 +162,11 @@ int uthread_join(int tid) {
 
 int uthread_sleep(int ticks) {
 	uint start_time = uptime();
-	printf(1, "Thread %d sleeping for %d ticks\n", threads[currentThread]->tid, ticks);
+	//printf(1, "Thread %d sleeping for %d ticks\n", threads[currentThread]->tid, ticks);
 	while (uptime() - start_time < ticks) {
 		uthread_yield();
 	}
-	printf(1, "%d Sleep done\n", threads[currentThread]->tid);
+	//printf(1, "%d Sleep done\n", threads[currentThread]->tid);
 	return 0;
 }
 
