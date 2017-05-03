@@ -80,7 +80,9 @@ void uthread_schedule() {
 	    	tf->ebp = threads[i]->tf.ebp;
 	    	threads[i]->new = 0;
 	    } else {
+			//printf(1, "TF Before: %x %x %x %x %x %x %x %x\n", tf->eip, tf->ebp, tf->esp, tf->cs, tf->ds, tf->gs, tf->fs, tf->ss);
 	    	*tf = threads[i]->tf;
+			//printf(1, "TF After: %x %x %x %x %x %x %x %x\n", tf->eip, tf->ebp, tf->esp, tf->cs, tf->ds, tf->gs, tf->fs, tf->ss);
 	    }
 
 		currentThread = i;	

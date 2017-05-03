@@ -1,8 +1,8 @@
 #include "types.h"
 #include "user.h"
 
-#define MAX_QUEUE_VALUE 5
-#define QUEUE_SIZE 3
+#define MAX_QUEUE_VALUE 1000
+#define QUEUE_SIZE 100
 
 uint queue[QUEUE_SIZE];
 uint producerIndex = 0;

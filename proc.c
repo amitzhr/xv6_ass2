@@ -526,7 +526,7 @@ void sigreturn_caller() {
 }
 
 void exec_signals(struct trapframe *tf) {
-  if (proc && !proc->handling_signal && ((proc->tf->cs & 3) == DPL_USER)) {
+  if (proc && !proc->handling_signal && ((tf->cs & 3) == DPL_USER)) {
     if (proc->pending != 0) {
       acquire(&ptable.lock);
       proc->handling_signal = 1;
