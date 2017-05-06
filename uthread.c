@@ -6,11 +6,17 @@
 
 #define THREAD_STACK_SIZE 4096
 
+enum STATE {
+	ACTIVE,
+	SLEEPING
+};
+
 typedef struct {
-	uint tid;
+	int tid;
 	char stack[THREAD_STACK_SIZE];
 	struct trapframe tf;
 	int new;
+	enum STATE state;
 } TCB, *PTCB;
 
 TCB* threads[MAX_UTHREADS];
@@ -48,13 +54,21 @@ struct trapframe* find_old_tf() {
     return (struct trapframe*)(ptr + 1);
 }
 
+PTCB init_tcb() {
+	PTCB tcb = (PTCB)malloc(sizeof(TCB));
+	tcb->tid = tidCounter;
+	tidCounter++;
+	tcb->state = ACTIVE;
+	return tcb;
+}
+
 void uthread_schedule() {
 	//printf(1, "uthread_schedule called\n");
 
 	uint threadsChecked = 0;
 	uint i = (currentThread + 1) % THREAD_STACK_SIZE;
 	while (threadsChecked < MAX_UTHREADS) {
-		if (threads[i])
+		if (threads[i] && threads[i]->state == ACTIVE)
 			break;
 		i = (i + 1) % MAX_UTHREADS;
 		threadsChecked++;
@@ -93,7 +107,8 @@ void uthread_schedule() {
 
 void uthread_exit() {
 	//printf(1, "uthread_exit called for %d\n", threads[currentThread]->tid);
-	free(threads[currentThread]);
+	alarm(0);
+	PTCB tcb = threads[currentThread];
 	threads[currentThread] = 0;
 
 	uint j;
@@ -103,6 +118,8 @@ void uthread_exit() {
 
 	currentThread = -1;
 	threadsIndex--;
+
+	free(tcb);
 
 	uthread_yield();
 }
@@ -114,11 +131,7 @@ int uthread_init() {
 		return -1;
 	}
 
-	threads[threadsIndex] = malloc(sizeof(TCB));
-
-	threads[threadsIndex]->tid = tidCounter;
-	tidCounter++;
-
+	threads[threadsIndex] = init_tcb();
 	threadsIndex++;
 
 	signal(SIGALRM, alarm_handler);
@@ -127,16 +140,14 @@ int uthread_init() {
 }
 
 int uthread_create(void (*start_func)(void *), void* arg) {
+	alarm(0);
+
 	if (threadsIndex >= MAX_UTHREADS) {
 		printf(2, "Too many threads! Exiting from uthread_create...\n");
 		return -1;
 	}
 
-	PTCB tcb = malloc(sizeof(TCB));
-
-	tcb->tid = tidCounter;
-	tidCounter++;
-
+	PTCB tcb = init_tcb();
 	threads[threadsIndex] = tcb;
 	threadsIndex++;
 
@@ -148,6 +159,8 @@ int uthread_create(void (*start_func)(void *), void* arg) {
 	tcb->tf.ebp = tcb->tf.esp;
 	tcb->tf.eip = (uint)start_func;
 	tcb->new = 1;
+
+	alarm(UTHREAD_QUANTA);
 
 	return tcb->tid;
 }
@@ -172,3 +185,7 @@ int uthread_sleep(int ticks) {
 	return 0;
 }
 
+void uthread_wait() {
+	threads[currentThread]->state = SLEEPING;
+	uthread_yield();
+}

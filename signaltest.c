@@ -6,7 +6,7 @@ void handler(int signum) {
 }
 
 void handler2(int signum) {
-	printf(1, "A %d", signum);
+	printf(1, "A %d\n", signum);
 	printf(1, "B");
 }
 
@@ -23,5 +23,6 @@ main(int argc, char *argv[])
 
 	printf(1, "Called signal: %x\n", signal(3, handler2));
 	sigsend(pid, 3);
+	sleep(10);
 	exit();
 }

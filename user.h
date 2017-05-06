@@ -53,6 +53,7 @@ int uthread_self();
 int uthread_join(int tid);
 int uthread_sleep(int ticks);
 void uthread_yield();
+void uthread_wait();
 
 // usemaphore.c
 int bsem_alloc();

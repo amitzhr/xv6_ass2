@@ -509,10 +509,12 @@ int sigsend(int pid, int signum) {
   struct proc *p;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if (p->pid == pid) {
-      //cprintf("Sending signal %d to process %d\n", signum, pid);
-      p->pending |= (1 << signum);
-      res = 0;
-      break;
+      uint sig = (1 << signum);
+      if (!(p->pending & sig)) {
+        p->pending |= sig;
+        res = 0;
+        break;
+      }
     }
   }
   release(&ptable.lock);
@@ -542,23 +544,23 @@ void exec_signals(struct trapframe *tf) {
             default_signal_handler(signum);
             proc->handling_signal = 0;
           } else {
-            uint old_esp = proc->tf->esp;
-            proc->tf->esp -= sizeof(struct trapframe);
-            memmove((char*)proc->tf->esp, proc->tf, sizeof(struct trapframe));
-            ((struct trapframe*)(proc->tf->esp))->esp = old_esp;
+            uint old_esp = tf->esp;
+            tf->esp -= sizeof(struct trapframe);
+            memmove((char*)tf->esp, tf, sizeof(struct trapframe));
+            ((struct trapframe*)(tf->esp))->esp = old_esp;
 
-            proc->tf->esp -= 4;
-            *((uint*)proc->tf->esp) = OLD_TF_MAGIC;
+            tf->esp -= 4;
+            *((uint*)tf->esp) = OLD_TF_MAGIC;
 
             uint code_length = &exec_signals - &sigreturn_caller;
-            proc->tf->esp -= code_length;
-            memmove((char*)proc->tf->esp, &sigreturn_caller, code_length);
-            uint code_addr = proc->tf->esp;
-            proc->tf->esp -= 4;
-            memmove((char*)proc->tf->esp, &signum, 4);
-            proc->tf->esp -= 4;
-            memmove((char*)proc->tf->esp, &code_addr, 4);
-            proc->tf->eip = (uint)handler;
+            tf->esp -= code_length;
+            memmove((char*)tf->esp, &sigreturn_caller, code_length);
+            uint code_addr = tf->esp;
+            tf->esp -= 4;
+            memmove((char*)tf->esp, &signum, 4);
+            tf->esp -= 4;
+            memmove((char*)tf->esp, &code_addr, 4);
+            tf->eip = (uint)handler;
             break;
           }
         }
