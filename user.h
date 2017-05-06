@@ -45,6 +45,7 @@ int atoi(const char*);
 void* malloc(uint);
 
 // uthread.c
+#define MAX_UTHREADS 64
 int uthread_init();
 int uthread_create(void (*start_func)(void *), void* arg);
 void uthread_schedule();
@@ -54,6 +55,7 @@ int uthread_join(int tid);
 int uthread_sleep(int ticks);
 void uthread_yield();
 void uthread_wait();
+void uthread_wakeup(int tid);
 
 // usemaphore.c
 int bsem_alloc();

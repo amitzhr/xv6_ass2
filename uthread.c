@@ -2,8 +2,6 @@
 #include "user.h"
 #include "x86.h"
 
-#define MAX_UTHREADS 64
-
 #define THREAD_STACK_SIZE 4096
 
 enum STATE {
@@ -188,4 +186,14 @@ int uthread_sleep(int ticks) {
 void uthread_wait() {
 	threads[currentThread]->state = SLEEPING;
 	uthread_yield();
+}
+
+void uthread_wakeup(int tid) {
+	PTCB t = find_thread_by_tid(tid);
+	if (t) {
+		t->state = ACTIVE;
+		//printf(1, "Wokeup %d\n", tid);
+	} else {
+		printf(1, "Failed to wakeup %d\n", tid);
+	}
 }
