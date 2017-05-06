@@ -17,7 +17,7 @@ void producer_handler(void* param) {
 	while (producerValue <= MAX_QUEUE_VALUE) {
 		down(empty);
 		bsem_down(mutex);
-		printf(1, "Produced %d\n", producerValue);
+		printf(1, "Thread %d produced %d\n", uthread_self(), producerValue);
 		queue[producerIndex] = producerValue;
 		producerIndex = (producerIndex + 1) % QUEUE_SIZE;
 		producerValue++;
@@ -31,7 +31,7 @@ void consumer_handler(void* param) {
 		down(full);
 		bsem_down(mutex);
 		uint item = queue[consumerIndex];
-		printf(1, "Consumed %d\n", item);
+		printf(1, "Thread %d consumed %d\n", uthread_self(), item);
 		consumerIndex = (consumerIndex + 1) % QUEUE_SIZE;
 		bsem_up(mutex);
 		up(empty);

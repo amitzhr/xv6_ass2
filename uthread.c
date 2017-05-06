@@ -175,7 +175,7 @@ int uthread_join(int tid) {
 
 int uthread_sleep(int ticks) {
 	uint end_time = uptime() + ticks;
-	printf(1, "Thread %d sleeping for %d ticks\n", threads[currentThread]->tid, ticks);
+	//printf(1, "Thread %d sleeping for %d ticks\n", threads[currentThread]->tid, ticks);
 	while (uptime() < end_time) {
 		uthread_yield();
 	}
