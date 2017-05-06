@@ -5,10 +5,9 @@
 #define MAX_BSEM 128
 
 struct semaphore {
-	uint available;
+	uint value;
 	uint bid;
-	uint waiting_threads[MAX_UTHREADS];
-	uint waiting_thread_index;
+	int waiting_threads[MAX_UTHREADS];
 };
 
 struct counting_semaphore {
@@ -42,10 +41,8 @@ int bsem_alloc() {
 	bidCounter++;
 
 	semaphores[bsemIndex].bid = bid;
-	semaphores[bsemIndex].available = 1;
-	semaphores[bsemIndex].waiting_thread_index = 0;
+	semaphores[bsemIndex].value = 1;
 	memset(semaphores[bsemIndex].waiting_threads, -1, sizeof(semaphores[bsemIndex].waiting_threads));
-	//printf(1, "Waiting threads: %d %d %d\n", semaphores[bsemIndex].waiting_threads[0], semaphores[bsemIndex].waiting_threads[1], semaphores[bsemIndex].waiting_threads[2]);
 
 	bsemIndex++;
 
@@ -75,8 +72,8 @@ void bsem_down(int bid) {
 	}
 	struct semaphore* b = &semaphores[i];
 
-	if (b->available) {
-		b->available = 0;
+	if (b->value) {
+		b->value = 0;
 		alarm(UTHREAD_QUANTA);
 	} else {
 		uint j;
@@ -106,28 +103,24 @@ void bsem_up(int bid) {
 
 	struct semaphore* b = &semaphores[i];
 
-	if (b->available) {
+	if (b->value) {
 		printf(2, "bsem_up: Tried to up an available semaphore (%d)!\n", uthread_self());
 		exit();
 	}
 		
-	i = b->waiting_thread_index;
-	uint threadsChecked = 0;
-	while (threadsChecked < MAX_UTHREADS) {
-		if (b->waiting_threads[i] != -1) {
+	uint j;
+	for (j = 0; j < MAX_UTHREADS; j++) {
+		if (b->waiting_threads[j] != -1) {
 			//printf(1, "bsem_up: Waking up %d\n", b->waiting_threads[i]);
-			uthread_wakeup(b->waiting_threads[i]);
-			b->waiting_threads[i] = -1;
-			b->waiting_thread_index = (i+1) % MAX_UTHREADS;
+			uthread_wakeup(b->waiting_threads[j]);
+			b->waiting_threads[j] = -1;
 			alarm(UTHREAD_QUANTA);
 			return;
-		}
-		i = (i + 1) % MAX_UTHREADS;
-		threadsChecked++;
+		}	
 	}
 
 	alarm(UTHREAD_QUANTA);
-	b->available = 1;
+	b->value = 1;
 }
 
 struct counting_semaphore* sem_alloc(uint value) {
