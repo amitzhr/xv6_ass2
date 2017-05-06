@@ -176,8 +176,6 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_signaltest\
-	_alarmtest\
-	_uthreadtest\
 	_sanity\
 
 fs.img: mkfs README $(UPROGS)

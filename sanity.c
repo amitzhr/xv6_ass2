@@ -68,6 +68,5 @@ int main(int argc, char *argv[])
 	sem_free(empty);
 	sem_free(full);
 	bsem_free(mutex);
-	exit();
 	return 0;
 }

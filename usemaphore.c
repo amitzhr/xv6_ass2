@@ -142,7 +142,7 @@ struct counting_semaphore* sem_alloc(uint value) {
 }
 
 void sem_free(struct counting_semaphore* s) {
-	printf(1, "Freeing counting_semaphore %x\n", (uint)s);
+	//printf(1, "Freeing counting_semaphore %x\n", (uint)s);
 	free(s);
 }
 
