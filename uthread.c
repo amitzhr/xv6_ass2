@@ -62,6 +62,7 @@ PTCB init_tcb() {
 
 void uthread_schedule() {
 	//printf(1, "uthread_schedule called\n");
+	alarm(0);
 
 	uint threadsChecked = 0;
 	uint i = (currentThread + 1) % THREAD_STACK_SIZE;
