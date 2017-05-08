@@ -65,7 +65,7 @@ void uthread_schedule() {
 	alarm(0);
 
 	uint threadsChecked = 0;
-	uint i = (currentThread + 1) % THREAD_STACK_SIZE;
+	uint i = (currentThread + 1) % MAX_UTHREADS;
 	while (threadsChecked < MAX_UTHREADS) {
 		if (threads[i] && threads[i]->state == ACTIVE)
 			break;
